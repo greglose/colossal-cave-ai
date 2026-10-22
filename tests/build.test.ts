@@ -10,7 +10,7 @@ const rel = (url: string) => url.slice(BASE.length);
 
 describe('page build', () => {
   it('ships the story file next to the page, for the offline worker to cache', () => {
-    expect(existsSync(join(ROOT, 'dist', 'advent-crowther.z5'))).toBe(true);
+    expect(existsSync(join(ROOT, 'dist', 'advent.z5'))).toBe(true);
   });
   it('caps the gzipped page script at 80 KB', () => {
     const files = scriptClosure(PAGE);
@@ -81,15 +81,15 @@ describe('page text', () => {
   });
   it('says plainly that the story file has no stated license and is included in good faith', () => {
     expect(text()).toMatch(/license is unstated/i);
-    expect(text()).toMatch(/while permission is sought/i);
+    expect(text()).toMatch(/permission is sought/i);
   });
   it('asks players for no story file', () => {
     expect(html(PAGE)('input[type="file"]').length).toBe(0);
     expect(text()).not.toMatch(/load story file|your own copy/i);
   });
-  it('credits Crowther and Chris Conley, and carries the only footer link', () => {
-    expect(text()).toMatch(/Will Crowther/);
-    expect(text()).toMatch(/Chris Conley/);
+  it('credits Crowther and Woods and Nelson, and carries the only footer link', () => {
+    expect(text()).toMatch(/Will Crowther and Don Woods/);
+    expect(text()).toMatch(/Graham Nelson/);
     const link = html(PAGE)('footer a[href="https://cantlosesoftware.com"]');
     expect(link.length).toBe(1);
     expect(html(PAGE)('footer').text()).toContain('A Cant Lose Software project');

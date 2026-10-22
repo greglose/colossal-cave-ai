@@ -2,7 +2,7 @@
 // Rules: same-origin GET only; a request to any other origin (openrouter.ai above all) is never intercepted, so the
 // key and the room text go straight from the page to the network. Static assets are cache-first; pages are
 // network-first with the cache as the offline fallback. Every cache lookup passes { ignoreVary: true }.
-// The story file (advent-crowther.z5) sits next to the page and is cached with the other static assets, so the game works offline.
+// The story file (advent.z5) sits next to the page and is cached with the other static assets, so the game works offline.
 const VERSION = 'cave-ai-v1';
 const SCOPE_PATH = new URL(self.registration.scope).pathname; // "/colossal-cave-ai/", or "/" on a domain root
 const MATCH = { ignoreVary: true };

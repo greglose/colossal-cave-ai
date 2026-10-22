@@ -20,4 +20,4 @@ dist
 *.blb
 *.gblorb
 *.ulx
-!public/advent-crowther.z5
+!public/advent.z5

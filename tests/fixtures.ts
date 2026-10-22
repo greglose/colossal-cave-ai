@@ -7,9 +7,6 @@ const DIR = join(__dirname, '..', 'node_modules', 'glkote-term', 'tests');
 
 export const ADVENT_Z5 = join(DIR, 'advent.z5');
 export const ADVENT_Z3 = join(DIR, 'advent.z3');
-/** The story file the site ships: Chris Conley's Inform 7 port of Crowther's 1976 Adventure (Z-machine v5). */
-export const CROWTHER = join(__dirname, '..', 'public', 'advent-crowther.z5');
-
 export const hasAdventZ5 = existsSync(ADVENT_Z5);
 export const hasAdventZ3 = existsSync(ADVENT_Z3);
 

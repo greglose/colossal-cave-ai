@@ -1,5 +1,5 @@
 // Page script for Colossal Cave AI. One engine per page load (the Glk layer is module-level state). The story file,
-// advent-crowther.z5, is served next to the page, checked, and handed to the interpreter.
+// advent.z5, is served next to the page, checked, and handed to the interpreter.
 import { createEngine } from '../lib/if/engine';
 import { createDetector } from '../lib/if/events';
 import { loadGameSave, loadSettings, writeGameSave, writeSettings } from '../lib/if/save';
@@ -14,7 +14,7 @@ import { createUi, findElements } from './ui';
 
 const GAME: GameId = 'adventure';
 
-const STORY_FILE = 'advent-crowther.z5';
+const STORY_FILE = 'advent.z5';
 
 async function init(): Promise<void> {
   const root = document.querySelector<HTMLElement>('[data-game]');

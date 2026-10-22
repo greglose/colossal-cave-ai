@@ -21,5 +21,5 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 This license covers the code written for this project. The story file
-(public/advent-crowther.z5) and the libraries it runs on have their own terms; see
+(public/advent.z5) and the libraries it runs on have their own terms; see
 THIRD-PARTY-NOTICES.md and docs/advent-story-file.md.

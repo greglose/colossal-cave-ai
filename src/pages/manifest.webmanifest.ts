@@ -9,7 +9,7 @@ export const GET: APIRoute = () =>
       {
         name: 'Colossal Cave: An AI Interpretation',
         short_name: 'Colossal Cave: An AI Interpretation',
-        description: "Will Crowther's 1976 Colossal Cave Adventure with AI-made pictures of each place using your own OpenRouter key.",
+        description: 'Colossal Cave Adventure with AI-made pictures of each place using your own OpenRouter key.',
         lang: 'en',
         dir: 'ltr',
         start_url: base,

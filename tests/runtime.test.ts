@@ -136,7 +136,7 @@ beforeEach(() => {
 describe('story file', () => {
   it('is fetched from next to the page and starts the game, with nothing for the player to load', async () => {
     await boot();
-    expect(fake.fetched).toEqual([expect.stringMatching(/\/advent-crowther\.z5$/)]);
+    expect(fake.fetched).toEqual([expect.stringMatching(/\/advent\.z5$/)]);
     expect(fake.engineBytes.length).toBe(1);
     expect(fake.engineBytes[0]![0]).toBe(5);
     expect(root().querySelector('input[type="file"]')).toBeNull();
