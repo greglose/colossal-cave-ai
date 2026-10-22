@@ -1,0 +1,23 @@
+node_modules
+dist
+.astro
+.env*
+.DS_Store
+
+# Story files stay out of git, except the one the game ships (see docs/advent-story-file.md).
+# tests/story-file.test.ts pins that one file by hash.
+*.z1
+*.z2
+*.z3
+*.z4
+*.z5
+*.z6
+*.z7
+*.z8
+*.zblorb
+*.zlb
+*.blorb
+*.blb
+*.gblorb
+*.ulx
+!public/advent.z5
