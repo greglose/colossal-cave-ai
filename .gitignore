@@ -1,0 +1,22 @@
+node_modules
+dist
+.astro
+.env*
+.DS_Store
+
+# Story files are never committed: Advent.z5 has no stated redistribution license, so each player loads their own
+# copy (see docs/advent-story-file.md). tests/no-story-file.test.ts fails if a tracked file looks like one.
+*.z1
+*.z2
+*.z3
+*.z4
+*.z5
+*.z6
+*.z7
+*.z8
+*.zblorb
+*.zlb
+*.blorb
+*.blb
+*.gblorb
+*.ulx
