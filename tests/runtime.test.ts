@@ -16,12 +16,11 @@ const fake = vi.hoisted(() => ({
   stored: new Map<string, Blob>(),
   turns: {} as Record<string, unknown>,
   story: null as Uint8Array | null,
-  storyPuts: 0,
-  storyClears: 0,
+  fetched: [] as string[],
+  fetchStatus: 200,
   engineBytes: [] as Uint8Array[],
   restores: 0,
   startFails: false,
-  reloads: 0,
 }));
 
 vi.mock('../src/lib/if/engine', () => ({
@@ -62,21 +61,6 @@ vi.mock('../src/scripts/media-store', () => ({
     put: async (k: unknown, b: Blob) => void fake.stored.set(JSON.stringify(k), b),
   }),
 }));
-vi.mock('../src/scripts/story-store', () => ({
-  createStoryStore: () => ({
-    get: async () => fake.story,
-    put: async (b: Uint8Array) => {
-      fake.story = b;
-      fake.storyPuts += 1;
-    },
-    clear: async () => {
-      fake.story = null;
-      fake.storyClears += 1;
-    },
-  }),
-}));
-vi.mock('../src/scripts/nav', () => ({ reloadPage: () => void (fake.reloads += 1) }));
-
 const turn = (location: string, text: string, score = 36): Turn => ({ text, status: { location, score, moves: 1 }, finished: false });
 const ROAD = 'At End Of Road\nYou are standing at the end of a road before a small brick building. Around you is a forest.';
 const BUILDING = 'Inside Building\nYou are inside a building, a well house for a large spring.';
@@ -92,7 +76,6 @@ const root = () => document.querySelector<HTMLElement>('[data-game]')!;
 const q = <T extends HTMLElement>(sel: string) => root().querySelector<T>(sel)!;
 const logText = () => q('[data-log]').textContent ?? '';
 const settle = () => new Promise((resolve) => setTimeout(resolve, 30));
-const visible = (sel: string) => !q(sel).hidden;
 
 async function type(command: string): Promise<void> {
   const input = q<HTMLInputElement>('[data-input]');
@@ -102,29 +85,24 @@ async function type(command: string): Promise<void> {
   await settle();
 }
 
-async function pickFile(bytes: Uint8Array): Promise<void> {
-  const input = q<HTMLInputElement>('[data-story-input]');
-  const file = { name: 'Advent.z5', size: bytes.length, arrayBuffer: async () => bytes.buffer.slice(0, bytes.byteLength) } as unknown as File;
-  Object.defineProperty(input, 'files', { value: [file], configurable: true });
-  input.dispatchEvent(new Event('change', { bubbles: true }));
-  await settle();
-}
-
 let page = '';
 beforeAll(async () => {
   page = await vi.waitFor(() => read('index.html'), { timeout: 60_000, interval: 250 });
 }, 65_000);
 
-async function boot(opts: { key?: string | null; consented?: boolean; story?: Uint8Array | null; ready?: 'game' | 'loader' } = {}): Promise<void> {
+async function boot(opts: { key?: string | null; consented?: boolean; story?: Uint8Array; ready?: 'game' | 'message'; messageText?: RegExp } = {}): Promise<void> {
   const settings = { ...defaultSettings(), key: opts.key === undefined ? 'sk-or-test-key' : opts.key, consented: opts.consented ?? true };
   writeSettings(localStorage, settings);
-  fake.story = opts.story === undefined ? story() : opts.story;
+  fake.story = opts.story ?? story();
   document.body.innerHTML = /<body[^>]*>([\s\S]*)<\/body>/.exec(page)![1].replace(/<script[\s\S]*?<\/script>/g, '');
+  vi.stubGlobal('fetch', async (url: string) => {
+    fake.fetched.push(String(url));
+    return new Response(fake.fetchStatus === 200 ? (fake.story as BlobPart) : 'x', { status: fake.fetchStatus });
+  });
   vi.resetModules();
   await import('../src/scripts/main.ts');
-  const ready = opts.ready ?? (opts.story === null ? 'loader' : 'game');
-  if (ready === 'game') await vi.waitFor(() => expect(logText()).toContain('end of a road before a small brick building'));
-  else await vi.waitFor(() => expect(visible('[data-loader]')).toBe(true));
+  if ((opts.ready ?? 'game') === 'game') await vi.waitFor(() => expect(logText()).toContain('end of a road before a small brick building'));
+  else await vi.waitFor(() => expect(logText()).toMatch(opts.messageText ?? /./));
   await settle();
 }
 
@@ -136,12 +114,11 @@ beforeEach(() => {
     videos: [],
     stored: new Map(),
     story: null,
-    storyPuts: 0,
-    storyClears: 0,
+    fetched: [],
+    fetchStatus: 200,
     engineBytes: [],
     restores: 0,
     startFails: false,
-    reloads: 0,
     turns: {
       start: turn('At End Of Road', `ADVENTURE\n${ROAD}\n>`),
       'take keys': turn('Inside Building', 'Taken.'),
@@ -157,82 +134,28 @@ beforeEach(() => {
 });
 
 describe('story file', () => {
-  it('first run shows the load panel and no game, and starts no engine', async () => {
-    await boot({ story: null });
-    expect(visible('[data-loader]')).toBe(true);
-    expect(q('[data-stage]').hidden).toBe(true);
-    expect(fake.engineBytes).toEqual([]);
-    expect(fake.images).toEqual([]);
-    expect(q('[data-loader]').textContent).toMatch(/Advent\.z5/);
-    expect(q('[data-loader]').textContent).toMatch(/your own copy/i);
-    expect(q('[data-act="cancel-load"]').hidden).toBe(true);
-  });
-
-  it('loading a valid file starts the game and keeps the file', async () => {
-    await boot({ story: null });
-    await pickFile(story(5));
-    await vi.waitFor(() => expect(logText()).toContain('end of a road before a small brick building'));
-    expect(fake.storyPuts).toBe(1);
+  it('is fetched from next to the page and starts the game, with nothing for the player to load', async () => {
+    await boot();
+    expect(fake.fetched).toEqual([expect.stringMatching(/\/advent\.z5$/)]);
     expect(fake.engineBytes.length).toBe(1);
     expect(fake.engineBytes[0]![0]).toBe(5);
-    expect(visible('[data-loader]')).toBe(false);
-    expect(q('[data-stage]').hidden).toBe(false);
+    expect(root().querySelector('input[type="file"]')).toBeNull();
   });
 
   it('a file that is not a story shows the reason and starts nothing', async () => {
-    await boot({ story: null });
-    await pickFile(story(0));
-    expect(q('[data-loader-error]').textContent).toMatch(/does not look like a Z-machine story file/);
-    expect(fake.storyPuts).toBe(0);
-    expect(fake.engineBytes).toEqual([]);
-    expect(visible('[data-loader]')).toBe(true);
-  });
-
-  it('a kept story file starts the game straight away, with no load panel', async () => {
-    await boot();
-    expect(visible('[data-loader]')).toBe(false);
-    expect(q('[data-stage]').hidden).toBe(false);
-    expect(fake.storyPuts).toBe(0);
-  });
-
-  it('a kept file that no longer validates is dropped and the load panel returns', async () => {
-    await boot({ story: story(0), ready: 'loader' });
-    expect(visible('[data-loader]')).toBe(true);
-    expect(fake.storyClears).toBe(1);
+    await boot({ story: story(0), ready: 'message', messageText: /does not look like a Z-machine story file/ });
     expect(fake.engineBytes).toEqual([]);
   });
 
-  it('a story the interpreter cannot start is dropped with a message', async () => {
+  it('a failed download says so and starts nothing', async () => {
+    fake.fetchStatus = 404;
+    await boot({ ready: 'message', messageText: /could not be loaded/ });
+    expect(fake.engineBytes).toEqual([]);
+  });
+
+  it('a story the interpreter cannot start shows a message', async () => {
     fake.startFails = true;
-    await boot({ story: story(4), ready: 'loader' });
-    expect(q('[data-loader-error]').textContent).toMatch(/could not be started/i);
-    expect(fake.storyClears).toBe(1);
-  });
-
-  it('Settings has Choose a different story file, which shows the panel with a way back', async () => {
-    await boot();
-    const button = q<HTMLButtonElement>('[data-act="change-story"]');
-    expect(button.textContent).toBe('Choose a different story file');
-    expect(q('[data-settings]').contains(button)).toBe(true);
-    button.click();
-    expect(visible('[data-loader]')).toBe(true);
-    expect(q('[data-stage]').hidden).toBe(true);
-    expect(q<HTMLButtonElement>('[data-act="cancel-load"]').hidden).toBe(false);
-    q<HTMLButtonElement>('[data-act="cancel-load"]').click();
-    expect(visible('[data-loader]')).toBe(false);
-    expect(q('[data-stage]').hidden).toBe(false);
-  });
-
-  it('choosing a different file keeps it, forgets the old position and reloads the page', async () => {
-    await boot();
-    await type('take keys');
-    expect(localStorage.getItem(GAME_SAVE_KEY)).toContain('bytes');
-    q<HTMLButtonElement>('[data-act="change-story"]').click();
-    await pickFile(story(5, 12));
-    expect(fake.storyPuts).toBe(1);
-    expect(fake.reloads).toBe(1);
-    const saved = JSON.parse(localStorage.getItem(GAME_SAVE_KEY)!);
-    expect(saved.bytes).toBeNull();
+    await boot({ ready: 'message', messageText: /could not be started/ });
   });
 });
 

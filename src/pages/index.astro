@@ -5,8 +5,7 @@ import { STYLES } from '../lib/if/styles';
 
 const base = import.meta.env.BASE_URL;
 const name = 'Colossal Cave: An AI Interpretation';
-const description = 'The original Colossal Cave Adventure in your browser, from your own copy of Advent.z5, with an AI-made picture of each place drawn through your own OpenRouter key.';
-const IF_ARCHIVE = 'https://www.ifarchive.org/indexes/if-archive/games/zcode/';
+const description = 'The original Colossal Cave Adventure in your browser, with an AI-made picture of each place drawn through your own OpenRouter key.';
 const defaults = defaultSettings();
 ---
 
@@ -28,32 +27,7 @@ const defaults = defaultSettings();
     <a class="skip" href="#command">Skip to the command box</a>
     <noscript><p class="noscript">This page needs JavaScript to run the game.</p></noscript>
     <main class="game" data-game>
-      <section class="stage loader" data-loader aria-labelledby="loader-title" hidden>
-        <h1 class="titlebar"><span>{name}</span></h1>
-        <div class="prose">
-          <h2 id="loader-title">Load story file</h2>
-          <p>
-            This page plays Colossal Cave Adventure from a Z-machine story file, <strong>Advent.z5</strong>. The file is
-            not included with this page. Download your own copy from the
-            <a href={IF_ARCHIVE} rel="noopener">Interactive Fiction Archive</a> (look for Advent.z5), then load it here.
-          </p>
-          <p>
-            The file is your own copy: it is not distributed here, and its license is unstated. It is kept in this
-            browser on this device and is never uploaded anywhere.
-          </p>
-          <div class="drop" data-drop data-over="false">
-            <label for="story-file">Choose the Advent.z5 file</label>
-            <input id="story-file" data-story-input type="file" accept=".z3,.z4,.z5,.z8,application/octet-stream" aria-describedby="drop-hint loader-error" />
-            <p class="fine" id="drop-hint">Or drop the file onto this box.</p>
-          </div>
-          <p class="notice" id="loader-error" data-loader-error role="alert"></p>
-          <div class="row">
-            <button type="button" class="gbtn" data-act="cancel-load" hidden>Go back to the game</button>
-          </div>
-        </div>
-      </section>
-
-      <div class="stage" data-stage hidden>
+      <div class="stage">
         <h1 class="titlebar"><span>{name}</span></h1>
 
         <div class="body">
@@ -109,8 +83,6 @@ const defaults = defaultSettings();
             <p class="fine" id="key-hint">Kept in this browser only and sent to openrouter.ai alone. Anyone who can use this browser profile can read it.</p>
             <button type="button" class="gbtn" data-act="forget">Forget key</button>
             <p class="fine" data-settings-status role="status"></p>
-            <button type="button" class="gbtn" data-act="change-story" aria-describedby="story-hint">Choose a different story file</button>
-            <p class="fine" id="story-hint">Your own copy of Advent.z5 is kept in this browser only. Choosing another file restarts the game.</p>
             <label>Picture model
               <input type="text" data-image-model autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="200" value={defaults.imageModel} />
             </label>
@@ -138,11 +110,11 @@ const defaults = defaultSettings();
             <p>
               Your position, art style and settings are saved in this browser only.
             </p>
-            <h2>The game and your copy of it</h2>
+            <h2>About the game file</h2>
             <p>
               Colossal Cave Adventure was written by Will Crowther (1976) and Don Woods (1977). The Z-machine version this
-              page runs, Advent.z5, is Graham Nelson's port. It is your own copy, not distributed here, and its license is
-              unstated. This is an unofficial interpretation and is not affiliated with or endorsed by any of them.
+              page runs, advent.z5, is Graham Nelson's port. Its license is unstated, so it is included here in good faith
+              while permission is sought. This is an unofficial interpretation and is not affiliated with or endorsed by any of them.
             </p>
           </div>
         </details>

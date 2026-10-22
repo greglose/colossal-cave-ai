@@ -61,12 +61,15 @@ describe('service worker', () => {
     expect(sw.fetchCalls).toEqual([]);
   });
 
-  it('never intercepts or caches a story file, whatever the name', async () => {
-    for (const name of ['Advent.z5', 'advent.z3', 'game.z8', 'story.zblorb', 'adventure.dat']) {
-      expect(sw.fetchEvent(`${SCOPE}${name}`)).toBeUndefined();
-    }
-    expect(sw.fetchCalls).toEqual([]);
-    expect(sw.store.size).toBe(0);
+  it('serves the story file cache-first, so the game works offline', async () => {
+    const url = `${SCOPE}advent.z5`;
+    expect(await (await sw.fetchEvent(url))!.text()).toBe('net');
+    expect(await (await sw.fetchEvent(url))!.text()).toBe('net');
+    expect(sw.fetchCalls).toEqual([url]);
+  });
+
+  it('leaves other file types and unknown paths alone', () => {
+    for (const name of ['other.zip', 'adventure.dat', 'notes.txt']) expect(sw.fetchEvent(`${SCOPE}${name}`)).toBeUndefined();
   });
 
   it('ignores Vary on every cache lookup', async () => {

@@ -1,5 +1,4 @@
-// Checks a story file the player picked. The app ships no story file: the player loads their own copy of Advent.z5.
-// Pure functions over bytes; no DOM and no storage. ifvms runs Z-machine versions 3, 4, 5 and 8.
+// Checks the story file before the interpreter gets it (a truncated download or a wrong file served by a cache). Pure functions over bytes; no DOM and no storage. ifvms runs Z-machine versions 3, 4, 5 and 8.
 
 export const MAX_STORY_BYTES = 1024 * 1024;
 const HEADER_BYTES = 64;
@@ -23,21 +22,21 @@ export function validateStory(bytes: Uint8Array): StoryCheck {
   return { ok: false, reason: 'not-zcode' };
 }
 
-/** One plain sentence telling the player what is wrong with the file they picked. */
+/** One plain sentence telling the player what is wrong with the game file. */
 export function storyProblem(check: Exclude<StoryCheck, { ok: true }>): string {
   switch (check.reason) {
     case 'empty':
-      return 'That file is empty. Choose the Advent.z5 file you downloaded.';
+      return 'The game file came back empty. Reload the page to try again.';
     case 'too-short':
-      return 'That file is too small to be a story file. Choose the Advent.z5 file you downloaded.';
+      return 'The game file is too small to be complete. Reload the page to try again.';
     case 'too-big':
-      return 'That file is larger than 1 MB, which is too big for a story file here. Choose Advent.z5.';
+      return 'The game file is larger than 1 MB, which is not right. Reload the page to try again.';
     case 'blorb':
-      return 'That is a Blorb package, not a bare story file. Choose Advent.z5 itself, not a .zblorb or .blb file.';
+      return 'The game file is a Blorb package, not a bare story file. Reload the page to try again.';
     case 'unsupported-version':
-      return `That is a Z-machine version ${check.version} story, which this page cannot run. Choose Advent.z5.`;
+      return `The game file is a Z-machine version ${check.version} story, which this page cannot run.`;
     case 'not-zcode':
-      return 'That does not look like a Z-machine story file. Choose the Advent.z5 file you downloaded.';
+      return 'The game file does not look like a Z-machine story file. Reload the page to try again.';
   }
 }
 

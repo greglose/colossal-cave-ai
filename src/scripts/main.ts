@@ -1,23 +1,20 @@
-// Page script for Colossal Cave AI. One engine per page load (the Glk layer is module-level state). The page ships no
-// story file: the player loads their own Advent.z5, which is checked, kept in IndexedDB and handed to the interpreter.
+// Page script for Colossal Cave AI. One engine per page load (the Glk layer is module-level state). The story file,
+// advent.z5, is served next to the page, checked, and handed to the interpreter.
 import { createEngine } from '../lib/if/engine';
 import { createDetector } from '../lib/if/events';
 import { loadGameSave, loadSettings, writeGameSave, writeSettings } from '../lib/if/save';
 import { createSpendGuard } from '../lib/if/settings';
-import { storyId, validateStory } from '../lib/if/story';
+import { storyId, storyProblem, validateStory } from '../lib/if/story';
 import type { GameId } from '../lib/if/types';
 import { createController } from './controller';
 import { createMediaStore } from './media-store';
-import { reloadPage } from './nav';
 import { createOpenRouter } from './openrouter';
 import { registerSW, safeStorage } from './pwa';
-import { createStoryLoader, findLoaderElements } from './story-loader';
-import { createStoryStore } from './story-store';
 import { createUi, findElements } from './ui';
 
 const GAME: GameId = 'adventure';
 
-const START_FAILED = 'That story file could not be started. Choose Advent.z5 again.';
+const STORY_FILE = 'advent.z5';
 
 async function init(): Promise<void> {
   const root = document.querySelector<HTMLElement>('[data-game]');
@@ -73,46 +70,8 @@ async function init(): Promise<void> {
     status.textContent = 'Key forgotten. It is no longer stored on this device.';
   });
 
-  // ---- Story file -----------------------------------------------------------------------------------------
-  const idb = typeof indexedDB === 'undefined' ? (undefined as unknown as IDBFactory) : indexedDB;
-  const storyStore = createStoryStore(idb);
-  const stage = q('[data-stage]');
-  let gameStarted = false;
-
-  const loader = createStoryLoader({
-    els: findLoaderElements(root),
-    store: storyStore,
-    onLoaded(story) {
-      // The interpreter's Glk layer is one-shot per page load, so a second story (or a retry after a failed start)
-      // begins on a fresh load. A position saved with another story is forgotten first.
-      if (gameStarted) {
-        if (loadGameSave(storage).storyId !== storyId(story)) {
-          writeGameSave(storage, { styleId: settings.styleByGame[GAME] ?? null, bytes: null, storyId: null });
-        }
-        reloadPage();
-        return;
-      }
-      loader.hide();
-      stage.hidden = false;
-      void startGame(story);
-    },
-    onCancel() {
-      stage.hidden = false;
-    },
-  });
-  q('[data-act="change-story"]').addEventListener('click', () => {
-    stage.hidden = true;
-    loader.show({ canCancel: true });
-  });
-
-  function needStory(message = ''): void {
-    stage.hidden = true;
-    loader.show({ canCancel: gameStarted, message });
-  }
-
   // ---- Game -----------------------------------------------------------------------------------------------
   async function startGame(story: Uint8Array): Promise<void> {
-    gameStarted = true;
     const thisStory = storyId(story);
     const engine = createEngine(story);
     const controller = createController({
@@ -125,7 +84,7 @@ async function init(): Promise<void> {
         getKey: () => settings.key,
         sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
       }),
-      store: createMediaStore(idb),
+      store: createMediaStore(typeof indexedDB === 'undefined' ? (undefined as unknown as IDBFactory) : indexedDB),
       ui,
       game: GAME,
     });
@@ -168,8 +127,7 @@ async function init(): Promise<void> {
       // Only a position saved with this very story file is restored.
       await controller.start(save.bytes && save.storyId === thisStory ? save.bytes : undefined);
     } catch {
-      await storyStore.clear();
-      needStory(START_FAILED);
+      ui.showText('The game could not be started. Reload the page to try again.');
       return;
     }
     persistGame();
@@ -178,15 +136,21 @@ async function init(): Promise<void> {
   }
 
   const base = import.meta.env.BASE_URL;
-  const kept = await storyStore.get();
-  if (kept && validateStory(kept).ok) {
-    loader.hide();
-    stage.hidden = false;
-    await startGame(kept);
-  } else {
-    if (kept) await storyStore.clear();
-    needStory();
+  let story: Uint8Array;
+  try {
+    const res = await fetch(`${base}${STORY_FILE}`);
+    if (!res.ok) throw new Error(String(res.status));
+    story = new Uint8Array(await res.arrayBuffer());
+  } catch {
+    ui.showText('The game file could not be loaded. Check your connection and reload the page.');
+    return;
   }
+  const check = validateStory(story);
+  if (!check.ok) {
+    ui.showText(storyProblem(check));
+    return;
+  }
+  await startGame(story);
 }
 
 void init();

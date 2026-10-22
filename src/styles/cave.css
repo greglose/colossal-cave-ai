@@ -80,8 +80,3 @@ input[type='text'], input[type='password'], select { min-height: 44px; padding: 
 .site-footer p { margin: 0; }
 
 .noscript { margin: 16px; padding: 12px; border: 2px solid var(--ink); }
-.loader[hidden], .stage[hidden] { display: none; }
-.drop { display: grid; gap: 8px; padding: 16px; border: 2px dashed var(--ink); background: var(--shade); }
-.drop label { font-weight: 700; }
-.drop[data-over='true'] { background: var(--hilite); color: var(--on-hilite); border-style: solid; }
-.drop input[type='file'] { min-height: 44px; max-width: 100%; font: inherit; }

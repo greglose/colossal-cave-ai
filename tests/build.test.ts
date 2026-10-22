@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { join } from 'node:path';
 import { BASE, html, read, scriptClosure } from './helpers';
@@ -9,10 +9,8 @@ const ROOT = join(__dirname, '..');
 const rel = (url: string) => url.slice(BASE.length);
 
 describe('page build', () => {
-  it('ships no story file: the player loads their own copy', () => {
-    const files = readdirSync(join(ROOT, 'dist'), { recursive: true, encoding: 'utf8' });
-    expect(files.filter((f) => /\.(z[1-8]|zblorb|zlb|blb|blorb|ulx|gblorb)$/i.test(f))).toEqual([]);
-    expect(files.filter((f) => /advent/i.test(f) && !/\.(js|css|html)$/.test(f))).toEqual([]);
+  it('ships the story file next to the page, for the offline worker to cache', () => {
+    expect(existsSync(join(ROOT, 'dist', 'advent.z5'))).toBe(true);
   });
   it('caps the gzipped page script at 80 KB', () => {
     const files = scriptClosure(PAGE);
@@ -43,7 +41,7 @@ describe('page build', () => {
     const $ = html(PAGE);
     const urls = $('[src],[href]').map((_, el) => $(el).attr('src') ?? $(el).attr('href') ?? '').get();
     const external = urls.filter((u) => /^https?:\/\//.test(u));
-    expect(external.sort()).toEqual(['https://cantlosesoftware.com', 'https://www.ifarchive.org/indexes/if-archive/games/zcode/']);
+    expect(external).toEqual(['https://cantlosesoftware.com']);
   });
 });
 
@@ -81,17 +79,13 @@ describe('page text', () => {
     expect(text()).toMatch(/your own OpenRouter/i);
     expect(text()).toMatch(/Kept in this browser only and sent to openrouter\.ai alone/);
   });
-  it("says plainly that the story file is the player's own copy, not distributed here, license unstated", () => {
-    expect(text()).toMatch(/your own copy/i);
-    expect(text()).toMatch(/not distributed here/i);
+  it('says plainly that the story file has no stated license and is included in good faith', () => {
     expect(text()).toMatch(/license is unstated/i);
+    expect(text()).toMatch(/permission is sought/i);
   });
-  it('offers a Load story file panel that links to the Interactive Fiction Archive', () => {
-    const $ = html(PAGE);
-    expect($('[data-loader] input[type="file"]').length).toBe(1);
-    expect($('[data-loader] a[href="https://www.ifarchive.org/indexes/if-archive/games/zcode/"]').length).toBe(1);
-    expect($('[data-loader]').text()).toMatch(/Advent\.z5/);
-    expect($('[data-act="change-story"]').text()).toBe('Choose a different story file');
+  it('asks players for no story file', () => {
+    expect(html(PAGE)('input[type="file"]').length).toBe(0);
+    expect(text()).not.toMatch(/load story file|your own copy/i);
   });
   it('credits Crowther and Woods and Nelson, and carries the only footer link', () => {
     expect(text()).toMatch(/Will Crowther and Don Woods/);

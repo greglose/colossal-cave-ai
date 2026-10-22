@@ -1,11 +1,12 @@
 # Third-party notices
 
-This project's own code is MIT (see LICENSE). It depends on the following, both MIT-licensed and bundled into the page.
+This project's own code is MIT (see LICENSE). It depends on the following, both MIT-licensed and bundled into the page, and ships one story file, below.
 
-No story file is included. Colossal Cave Adventure (Will Crowther and Don Woods) and Graham Nelson's Z-machine port,
-Advent.z5, have no stated redistribution license, so the player supplies their own copy; see
-docs/advent-story-file.md. The Nelson `advent.z3` / `advent.z5` builds that the glkote-term package ships as its own
-test fixtures are read in place from node_modules by the tests and are not part of this project.
+## advent.z5 (public/advent.z5)
+
+Graham Nelson's Z-machine port of Colossal Cave Adventure by Will Crowther and Don Woods. It has no stated
+redistribution license and is included in good faith while permission is sought; see docs/advent-story-file.md. It is
+not covered by this project's MIT license.
 
 ## ifvms 1.1.6 (Z-machine interpreter, bundled into the page)
 
