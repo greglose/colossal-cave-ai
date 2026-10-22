@@ -62,7 +62,7 @@ describe('service worker', () => {
   });
 
   it('serves the story file cache-first, so the game works offline', async () => {
-    const url = `${SCOPE}advent.z5`;
+    const url = `${SCOPE}advent-crowther.z5`;
     expect(await (await sw.fetchEvent(url))!.text()).toBe('net');
     expect(await (await sw.fetchEvent(url))!.text()).toBe('net');
     expect(sw.fetchCalls).toEqual([url]);

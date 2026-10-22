@@ -72,10 +72,18 @@ function flatten(items: Styled[] | undefined): string {
   return out;
 }
 
+// Inform draws the status line in the upper window as the location on the left and, on the right, either
+// "Score: N  Moves: M" (a scored game), "N/M" (a narrow window) or just the move count (an unscored game such as
+// Crowther's 1976 Adventure). Unscored games report a score of 0, so no score gain is ever detected for them.
 function parseStatus(line: string): Turn['status'] {
-  const m = /^(.*?)\s{2,}Score:\s*(-?\d+)\s+(?:Turns|Moves):\s*(\d+)/.exec(line.trim());
-  if (!m) return null;
-  return { location: m[1].trim(), score: Number(m[2]), moves: Number(m[3]) };
+  const text = line.trim();
+  const scored = /^(.*?)\s{2,}Score:\s*(-?\d+)\s+(?:Turns|Moves):\s*(\d+)$/.exec(text);
+  if (scored) return { location: scored[1].trim(), score: Number(scored[2]), moves: Number(scored[3]) };
+  const slashed = /^(.*?)\s{2,}(-?\d+)\/(\d+)$/.exec(text);
+  if (slashed) return { location: slashed[1].trim(), score: Number(slashed[2]), moves: Number(slashed[3]) };
+  const unscored = /^(.*?)\s{2,}(\d+)$/.exec(text);
+  if (unscored) return { location: unscored[1].trim(), score: 0, moves: Number(unscored[2]) };
+  return null;
 }
 
 // `glk` is injectable because glkote-term's Glk is a module singleton: tests (or a page that restarts

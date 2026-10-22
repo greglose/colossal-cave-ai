@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
-import { ADVENT_Z5, hasAdventZ5, readStory } from '../../../tests/fixtures';
+import { ADVENT_Z5, CROWTHER, hasAdventZ5, readStory } from '../../../tests/fixtures';
 import { createEngine } from './engine';
 import { createDetector } from './events';
 import type { Turn } from './types';
@@ -12,6 +12,12 @@ function freshEngine() {
   return createEngine(readStory(ADVENT_Z5), nodeRequire(path));
 }
 
+function freshCrowther() {
+  const path = nodeRequire.resolve('glkote-term/src/glkapi.js');
+  delete nodeRequire.cache[path];
+  return createEngine(readStory(CROWTHER), nodeRequire(path));
+}
+
 const turn = (over: Partial<Turn> = {}): Turn => ({
   text: '',
   status: { location: 'At End Of Road', score: 36, moves: 0 },
@@ -19,7 +25,7 @@ const turn = (over: Partial<Turn> = {}): Turn => ({
   ...over,
 });
 
-describe.skipIf(!hasAdventZ5)('createDetector on a recorded Advent transcript', () => {
+describe.skipIf(!hasAdventZ5)('createDetector on a recorded Advent transcript (Nelson, scored)', () => {
   it('first_turn_yields_newroom_at_end_of_road_then_inside_building_on_entering', async () => {
     const engine = freshEngine();
     const detector = createDetector();
@@ -78,6 +84,19 @@ describe('createDetector on scripted turns', () => {
     expect(d.next(turn({ text })).map((e) => e.kind)).toEqual(['death']);
   });
 
+  it('a_starred_death_banner_yields_death', () => {
+    const d = createDetector();
+    d.next(turn());
+    const text = '*** You fell into a pit and broke every bone in your body! ***\n\nWould you like to RESTART, RESTORE a saved game, QUIT or UNDO the last command?';
+    expect(d.next(turn({ text })).map((e) => e.kind)).toEqual(['death']);
+  });
+
+  it('a_starred_win_banner_is_an_ending_and_not_a_death', () => {
+    const d = createDetector();
+    d.next(turn());
+    expect(d.next(turn({ text: '*** You have won ***' })).map((e) => e.kind)).toEqual(['ending']);
+  });
+
   it('text_containing_you_have_won_yields_ending_even_while_the_game_is_still_running', () => {
     const d = createDetector();
     d.next(turn());
@@ -107,5 +126,19 @@ describe('createDetector on scripted turns', () => {
     const d = createDetector();
     d.next(turn({ status: { location: 'At End Of Road', score: 46, moves: 1 } }));
     expect(d.next(turn({ status: { location: 'At End Of Road', score: 40, moves: 2 } }))).toEqual([]);
+  });
+});
+
+describe('createDetector on the shipped Crowther story (no score)', () => {
+  it('finds_rooms_from_the_status_line_and_never_a_score_gain', async () => {
+    const engine = freshCrowther();
+    const detector = createDetector();
+    await engine.start();
+    const first = detector.next(await engine.send('no'));
+    expect(first[0]).toMatchObject({ kind: 'newRoom', roomId: 'end of road', roomName: 'End of Road' });
+    const moved = detector.next(await engine.send('enter building'));
+    expect(moved.map((e) => e.kind)).toEqual(['newRoom']);
+    expect(moved[0]).toMatchObject({ roomId: 'building' });
+    expect(detector.next(await engine.send('take keys'))).toEqual([]);
   });
 });

@@ -6,9 +6,9 @@ import { describe, expect, it } from 'vitest';
 import { validateStory } from '../src/lib/if/story';
 
 const ROOT = join(__dirname, '..');
-const STORY = 'public/advent.z5';
-// Graham Nelson's Advent.z5 (release 9, serial 060321), as shipped in the glkote-term package's test fixtures.
-const SHA256 = '6179b5d5b17d692ec83fe64101ff8e4092390166c2b05063e7310eb976b93ea0';
+const STORY = 'public/advent-crowther.z5';
+// Chris Conley's Inform 7 port of Will Crowther's 1976 Adventure (release 2, serial 110819), Advent_Crowther-r2.z5.
+const SHA256 = '6a2f94c6b99da7e67312e823bd4574d27bb1a68d4688dac6c5c22eed910fb27a';
 const STORY_NAME = /\.(z[1-8]|zblorb|zlb|blb|blorb|gblorb|ulx)$/i;
 
 describe('the shipped story file', () => {

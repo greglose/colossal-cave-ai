@@ -1,6 +1,8 @@
 import type { GameEvent, Turn } from './types';
 
-const DEATH = /you have died|you are dead|gotten yourself killed/i;
+// Nelson's Advent asks to reincarnate; Inform 7 games print a starred banner ("*** You fell into a pit ... ***") and
+// ask to restart. A starred banner that says "You have won" is the ending, not a death.
+const DEATH = /you have died|you are dead|gotten yourself killed|\*\*\*\s*you (?!have won)[^*]*\*\*\*/i;
 const WON = /you have won/i;
 
 // Generic, game-agnostic event detection from the status line and turn text. Pure and stateful

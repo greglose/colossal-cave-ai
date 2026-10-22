@@ -62,6 +62,10 @@ function sceneOf(text: string, roomName: string): string {
   return (at >= 0 ? lines.slice(at + 1) : lines).join('\n').trim();
 }
 
+// Crowther's 1976 Adventure opens with "Would you like instructions?" before anything else. The page answers no.
+const INSTRUCTIONS_QUESTION = /^.*would you like instructions\?.*$/im;
+const IMPLEMENTATION_NOTE = /^\(Type ABOUT[^\n]*\)\s*/im;
+
 export function createController(d: ControllerDeps) {
   const { engine, detector, settings, guard, openrouter, store, ui, game } = d;
   let room: Room | null = null;
@@ -229,6 +233,14 @@ export function createController(d: ControllerDeps) {
     async start(saved?: Uint8Array): Promise<void> {
       let turn = await engine.start();
       let command: string | undefined;
+      if (INSTRUCTIONS_QUESTION.test(turn.text)) {
+        // Show the banner without the question, then answer it so the first room appears.
+        const banner = turn.text.replace(INSTRUCTIONS_QUESTION, '');
+        if (cleanText(banner)) ui.showText(cleanText(banner));
+        turn = await engine.send('no');
+        turn = { ...turn, text: turn.text.replace(IMPLEMENTATION_NOTE, '') };
+        command = 'no';
+      }
       if (saved) {
         try {
           await engine.restore(saved);

@@ -2,11 +2,11 @@
 
 This project's own code is MIT (see LICENSE). It depends on the following, both MIT-licensed and bundled into the page, and ships one story file, below.
 
-## advent.z5 (public/advent.z5)
+## advent-crowther.z5 (public/advent-crowther.z5)
 
-Graham Nelson's Z-machine port of Colossal Cave Adventure by Will Crowther and Don Woods. It has no stated
-redistribution license and is included in good faith while permission is sought; see docs/advent-story-file.md. It is
-not covered by this project's MIT license.
+Chris Conley's Inform 7 port (release 2) of Will Crowther's 1976 Adventure. The file carries no license text and the
+original has none; it is included in good faith while the terms are confirmed. See docs/advent-story-file.md. It is not
+covered by this project's MIT license.
 
 ## ifvms 1.1.6 (Z-machine interpreter, bundled into the page)
 

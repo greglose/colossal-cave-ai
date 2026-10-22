@@ -1,39 +1,49 @@
-# The advent.z5 story file
+# The advent-crowther.z5 story file
 
 ## What it is
 
-`public/advent.z5` is Graham Nelson's Z-machine (Inform) port of the 350-point Colossal Cave Adventure by Will Crowther
-(1976) and Don Woods (1977). The banner reads "Reconstructed in three steps by Donald Ekman, David M. Baggett (1993)
-and Graham Nelson (1994)", release 9, serial number 060321, Inform 6.31 library. It is a Z-machine **version 5** story.
+`public/advent-crowther.z5` is `Advent_Crowther-r2.z5`: "Adventure - Colossal Cave by William Crowther, ported by Chris
+Conley", release 2 (about text: release 2.22), serial number 110819, built with Inform 7 build 6G60. It aims to
+reproduce the output text and world model of Crowther's original 1976 program. It is a Z-machine **version 5** story.
 
-- Size 138,240 bytes, SHA-256 `6179b5d5b17d692ec83fe64101ff8e4092390166c2b05063e7310eb976b93ea0`.
-- The bytes are the copy that ships as a test fixture (`tests/advent.z5`) in the `glkote-term` 0.4.4 npm package. The
-  Interactive Fiction Archive lists the same game at
-  https://www.ifarchive.org/indexes/if-archive/games/zcode/ ; the build environment could not reach that host, so the
-  archive's own copy was not compared byte for byte. Do that before relying on this file's provenance.
+- Size 254,464 bytes, SHA-256 `6a2f94c6b99da7e67312e823bd4574d27bb1a68d4688dac6c5c22eed910fb27a`.
+- It was supplied by the project owner. The build environment could not reach the Interactive Fiction Archive, so its
+  origin was not checked against the archive's copy.
+- It is the 1976 game, not the later 350-point Woods expansion: **no score** ("There is no score in this story."), a smaller
+  map, and one status-line column (location, then move count).
 
 ## License situation
 
-- The file has **no stated redistribution license**. The Interactive Fiction Database lists it as freeware.
-- It derives from Crowther and Woods' original, which had no explicit license either. (Eric Raymond's BSD-2-Clause
-  "Open Adventure" covers the 2.5 source with Don Woods' 2017 permission; that is a different lineage from Nelson's port
-  and does not cover this file.)
-- It is distributed on the Interactive Fiction Archive and bundled by other open projects, but that is not a license.
+- The file contains no license text (a search of its strings found none), and the project has not confirmed the terms
+  under which Chris Conley released it.
+- It reproduces Crowther's original, which had no explicit license either. (Eric Raymond's BSD-2-Clause "Open Adventure"
+  covers the later 2.5 source with Don Woods' 2017 permission; that is a different work and does not cover this file.)
+- Distribution elsewhere is not a license.
 
 ## Decision
 
 The site serves the file so that players do not have to find and load it. This is a deliberate choice by the project
-owner, made in good faith with the risk understood:
+owner, with the risk understood:
 
-- Permission from Graham Nelson is being sought. If it is granted, record it here. If anyone with a claim asks for the
-  file to be removed, remove it (`public/advent.z5`, the pinned hash and the About text) and either ship a
+- **To do:** confirm the terms with Chris Conley, and record them here. If anyone with a claim asks for the file to be
+  removed, remove it (`public/advent-crowther.z5`, the pinned hash and the About text) and either ship a
   bring-your-own-file flow or a different story.
-- The page says its license is unstated and that permission is being sought. The file is not altered.
-- `tests/story-file.test.ts` pins the exact file by hash and fails if any other story file is tracked, so the shipped
-  file cannot change unnoticed.
+- The page says its license is unstated and that permission is sought. The file is not altered.
+- `tests/story-file.test.ts` pins the exact file by hash and fails if any other story file is tracked.
+
+## How the app handles this story
+
+- **Opening question:** the game asks "Would you like instructions?" first. `controller.start` answers no (after showing
+  the banner without the question) and drops the "(Type ABOUT ...)" line from the first room text.
+- **Rooms:** the status line is `Location ... <moves>`. The engine reports score 0 for such games, so no score-gain video
+  is ever made. Pictures key on the location name ("End of Road", "Building", "Valley").
+- **Death:** a starred banner such as `*** You fell into a pit and broke every bone in your body! ***`, followed by
+  "Would you like to RESTART, RESTORE a saved game, QUIT or UNDO the last command?". The player types one of those.
+- **Quit:** the game exits and the page stops sending commands.
 
 ## Tests
 
-The specs that play real turns read `advent.z5` and `advent.z3` in place from `node_modules/glkote-term/tests/`
-(`find node_modules/glkote-term -iname 'advent*'`) and skip if absent. `tests/story-file.test.ts` and the build test
-cover the shipped copy.
+The shipped file is exercised directly by the engine, event and story-file specs. The scored-game paths (the
+`Score: N  Moves: M` status line) are covered by the Nelson `advent.z5` / `advent.z3` builds that ship as test fixtures in
+`node_modules/glkote-term/tests/`, read in place and never copied to a tracked path; those specs skip if absent. The
+Nelson files are not part of this project.

@@ -1,4 +1,4 @@
-import { ADVENT_Z5, hasAdventZ5, readStory } from '../../tests/fixtures';
+import { ADVENT_Z5, CROWTHER, hasAdventZ5, readStory } from '../../tests/fixtures';
 import { createRequire } from 'node:module';
 import { describe, expect, it, vi } from 'vitest';
 import { createDetector } from '../lib/if/events';
@@ -307,6 +307,40 @@ describe('createController', () => {
   });
 });
 
+describe('createController start with the instructions question', () => {
+  const asked = (): Turn => ({ text: 'ADVENTURE\nColossal Cave by William Crowther\n\nWelcome to Adventure!! Would you like instructions?\n\n  ', status: null, finished: false });
+  const answered = (): Turn =>
+    turn('End of Road', 0, 'no\n\n(Type ABOUT for details about this specific Inform 7 implementation.)\n\nYou are standing at the end of a road before a small brick building.\n\n>');
+
+  it('answers_no_shows_the_banner_without_the_question_and_pictures_the_first_room', async () => {
+    const r = rig({ turns: [asked(), answered()] });
+    await r.controller.start();
+    await r.controller.idle();
+    expect(r.sent).toEqual(['no']);
+    const shown = r.ui.showText.mock.calls.map((c) => c[0]);
+    expect(shown[0]).toContain('Colossal Cave by William Crowther');
+    expect(shown.join('\n')).not.toMatch(/Would you like instructions/);
+    expect(shown[1]).toBe('You are standing at the end of a road before a small brick building.');
+    expect(r.openrouter.image).toHaveBeenCalledTimes(1);
+    expect(r.prompts[0]).not.toMatch(/Type ABOUT|Inform 7/);
+    expect(r.prompts[0]).toContain('end of a road');
+  });
+
+  it('answers_no_before_restoring_a_saved_position', async () => {
+    const r = rig({ turns: [asked(), answered(), turn('Building', 0, 'restored'), turn('Building', 0, 'look\nYou are inside a building.\n\n>')] });
+    await r.controller.start(new Uint8Array([1, 2, 3]));
+    expect(r.sent).toEqual(['no', 'look']);
+    expect(r.engine.restore).toHaveBeenCalledTimes(1);
+    expect(r.ui.showText).toHaveBeenLastCalledWith('You are inside a building.');
+  });
+
+  it('a_game_that_does_not_ask_is_left_alone', async () => {
+    const r = rig({ turns: [turn('At End Of Road', 36, 'Welcome\nAt End Of Road\nYou are standing.\n>')] });
+    await r.controller.start();
+    expect(r.sent).toEqual([]);
+  });
+});
+
 describe('cleanText', () => {
   it('drops_the_echoed_command_line_and_the_trailing_prompt', () => {
     expect(cleanText('open mailbox\nOpening the small mailbox reveals a leaflet.\n\n>', 'open mailbox')).toBe(
@@ -354,5 +388,28 @@ describe.skipIf(!hasAdventZ5)('over the real Advent.z5', () => {
     expect(r.openrouter.image).toHaveBeenCalledTimes(2);
     expect(r.prompts[1]).toContain('well house for a large spring');
     expect(r.prompts.join('\n')).not.toMatch(/enter building|take keys/i);
+  });
+});
+
+describe('over the shipped Crowther story', () => {
+  it('answers_the_opening_question_and_pictures_each_new_room_once', async () => {
+    const nodeRequire = createRequire(import.meta.url);
+    const path = nodeRequire.resolve('glkote-term/src/glkapi.js');
+    delete nodeRequire.cache[path];
+    const real = createEngine(readStory(CROWTHER), nodeRequire(path));
+    const r = rig();
+    const shown: string[] = [];
+    const ui = { ...r.ui, showText: (t: string) => void shown.push(t) };
+    const c = createController({ engine: real, detector: createDetector(), settings: r.settings, guard: createSpendGuard(r.settings), openrouter: r.openrouter, store: r.store, ui, game: 'adventure' });
+    await c.start();
+    await c.command('enter building');
+    await c.command('out');
+    await c.idle();
+    expect(shown.join('\n')).not.toMatch(/Would you like instructions|Type ABOUT/);
+    expect(shown.some((t) => t.includes('end of a road before a small brick building'))).toBe(true);
+    expect(shown.some((t) => t.includes('well house for a large spring'))).toBe(true);
+    // End of Road, Building, then End of Road again (already pictured).
+    expect(r.openrouter.image).toHaveBeenCalledTimes(2);
+    expect(r.prompts.join('\n')).not.toMatch(/enter building/i);
   });
 });

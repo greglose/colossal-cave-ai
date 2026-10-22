@@ -17,7 +17,7 @@ describe('docs and deploy', () => {
   it('the README covers the story file, the key, privacy and credits', () => {
     const readme = text('README.md');
     expect(readme).toMatch(/Players load nothing/);
-    expect(readme).toMatch(/license is unstated/i);
+    expect(readme).toMatch(/license is not known/i);
     expect(readme).toMatch(/OpenRouter key/);
     expect(readme).toMatch(/goes only to `openrouter\.ai`/);
     expect(readme).toMatch(/Crowther/);
@@ -30,14 +30,14 @@ describe('docs and deploy', () => {
     const notices = text('THIRD-PARTY-NOTICES.md');
     expect(notices).toMatch(/ifvms/);
     expect(notices).toMatch(/glkote-term/);
-    expect(notices).toMatch(/advent\.z5/);
-    expect(notices).toMatch(/no stated\s+redistribution license/);
+    expect(notices).toMatch(/advent-crowther\.z5/);
+    expect(notices).toMatch(/no license text/);
   });
 
-  it('the story file document says permission from Graham Nelson is being sought', () => {
+  it('the story file document records the license situation and the open question', () => {
     const doc = text('docs/advent-story-file.md');
-    expect(doc).toMatch(/Permission from Graham Nelson is being sought/);
-    expect(doc).toMatch(/no stated redistribution license/i);
+    expect(doc).toMatch(/confirm the terms with Chris Conley/);
+    expect(doc).toMatch(/no license text/i);
   });
 
   it('keeps the MIT license of Greg Lose', () => {
@@ -49,7 +49,7 @@ describe('docs and deploy', () => {
     expect(text('astro.config.mjs')).toContain("'/colossal-cave-ai/'");
     expect(text('astro.config.mjs')).toContain('https://greglose.github.io');
     expect(existsSync(join(ROOT, 'public/zork1.z3'))).toBe(false);
-    expect(existsSync(join(ROOT, 'public/advent.z5'))).toBe(true);
+    expect(existsSync(join(ROOT, 'public/advent-crowther.z5'))).toBe(true);
     const files = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: ROOT, encoding: 'utf8' })
       .split('\0')
       .filter((f) => f && existsSync(join(ROOT, f)) && !/\.(png|lock)$|package-lock\.json$|^docs\/BUILD-BRIEF\.md$|^README\.md$|^tests\/(repo|build)\.test\.ts$|^src\/lib\/if\/prompt\.test\.ts$/.test(f));
